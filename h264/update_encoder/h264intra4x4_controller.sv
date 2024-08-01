@@ -185,6 +185,8 @@ begin
     t_yy = (tvalid || yy != 0);
     l_xx = (lvalid || xx != 0);
     dconly_sel2 = l_xx && t_yy;
+    R_P_mode_sel = {(dconly || prevmode == modeoi), (modeoi < prevmode)}
+    XXINC = 1'b0;
 
     case (c_state)
         S0:
@@ -255,53 +257,86 @@ begin
             totdif_en = 1'b0;
             modeoi_en = 1'b1;
             if (vtotdif <= htotdif && vtotdif <= dtotdif && !dconly) 
-                modeoi <= 8'h0;		
+                modeoi_sel = 2'h0;		
             else if (htotdif <= dtotdif && !dconly) 
-                modeoi <= 8'h1;		
+                modeoi_sel = 2'h1;		
             else
-                modeoi <= 8'h2;		
+                modeoi_sel = 2'h2;		
         end
 
         S12:
         begin 
- 
+            modeoi_en = 1'b0;
+            en_12 = 1'b1;
+            outf1_en = 1'b1;
         end
 
         S13:
         begin 
+            en_12 = 1'b0;
+            outf1_en = 1'b1;
         end
+
         S14:
         begin 
-
+            outf1_en = 1'b1;
         end
 
         S15:
         begin
-        end
+            outf1_en = 1'b1;
+            submb_en = 1'b1;
+            oldxx_en = 1'b1;
+            if (!FBSTROBE) 
+            begin
+                fbptr_rst = 1'b1;
+                fbpending_en  = 1'b1;
+            end
+            else 
+            begin
+                fbptr_rst = 1'b0;
+                fbpending_en  = 1'b0;
+            end
+
+            if(!xx[0]) chreadyi_en = 1'b1;
+            else       chreadyi_en = 1'b0;
+        end 
         S16:
         begin 
+            submb_en = 1'b0;
+            outf1_en = 1'b0;
+            oldxx_en = 1'b0;
+            chreadyi_en = 1'b0;
+            fbptr_rst = 1'b0;
+            fbpending_en  = 1'b0;
+
+            xxo_sel  = 1'b1;
+            topih_en = 1'b1;
 
         end
+
         S17:
         begin 
-
+            xxo_sel  = 1'b0;
+            topih_en = 1'b0;
         end
+
         S18:
         begin 
-
         end
+
         S19:
         begin 
-
         end
+
         S20:
         begin 
-
+            XXINC = 1'b1;
         end
 
         default: 
         begin
-            out = 1'bx;
+            
         end
 
     endcase

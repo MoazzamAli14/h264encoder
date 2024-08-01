@@ -40,8 +40,8 @@ logic [1;0] tvalid_sel = '0;
 
 logic dconly = '0;
 logic dconly_n = '0;
-logic dconly_en = '0;
-logic [1:0] dconly_sel = '0;
+logic dconly_sel2 = '0;
+logic dconly_sel1 = '0;
 
 
 logic [31:0] topih = '0;
@@ -276,8 +276,8 @@ begin
        2'h3 :      chreadyii_n = chreadyii;
     endcase
 
-    dconly_m = dconly_sel ? 1'b0 : 1'b1;
-    dconly_n = dconly_en  ? dconly_m: dconly;
+    dconly_m = dconly_sel2 ? 1'b0 : 1'b1;
+    dconly_n = dconly_sel1  ? dconly_m: dconly;
 
 end
 
