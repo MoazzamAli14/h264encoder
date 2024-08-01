@@ -101,234 +101,332 @@ logic [10:0] sumtl = '0;
 
 integer xi, yi;
 
+// Memory part 
 always_ff @(posedge CLK ) 
 begin
-   //submb_counter..........
-   if(submb_en)   submb <= submb+1;
-   else 		      submb <= submb;
+    //submb_counter..........
+    if(submb_en)   submb <= submb+1;
+    else 		      submb <= submb;
 
-   //fbptr counter.........
-   if(fbptr_rst) 		   fbptr <= {yy, 2'b00};
-   else if (FBSTROBE)	fbptr <= fbptr + 1;
-   else				      fbptr <= fbptr;
+    //fbptr counter.........
+    if(fbptr_rst) 		   fbptr <= {yy, 2'b00};
+    else if (FBSTROBE)	fbptr <= fbptr + 1;
+    else				      fbptr <= fbptr;
 
-   //statei_counter
-   if(RST_0)	      statei <= 6'b000000;
-   else if (STROBEI)	statei <= statei + 1;
-   else				   statei <= statei;
+    //statei_counter
+    if(RST_0)	      statei <= 6'b000000;
+    else if (STROBEI)	statei <= statei + 1;
+    else				   statei <= statei;
 
-   //pixleft 8x16 mem
-   //FBSTROBE-->work as write signal
-   if (FBSTROBE)  pixleft[fbptr] <= FEEDBI;
+    //pixleft 8x16 mem
+    //FBSTROBE-->work as write signal
+    if (FBSTROBE)  pixleft[fbptr] <= FEEDBI;
 
-   // pix 32x64 mem, write on STROBEI
-   if (STROBEI) pix[statei] <= DATAI;
+    // pix 32x64 mem, write on STROBEI
+    if (STROBEI) pix[statei] <= DATAI;
 
-   //lmode 4x4, write on en_12.......
-   if (en_12) lmode[yy] <= modeoi;
+    //lmode 4x4, write on en_12.......
+    if (en_12) lmode[yy] <= modeoi;
 
 end
 
 always_comb 
 begin
-   //output from pixlef mem........
-   left0 = pixleft[{yy, 2'b00}];
-   left1 = pixleft[{yy, 2'b01}];
-   left2 = pixleft[{yy, 2'b10}];
-   left3 = pixleft[{yy, 2'b11}];
+    //output from pixlef mem........
+    left0 = pixleft[{yy, 2'b00}];
+    left1 = pixleft[{yy, 2'b01}];
+    left2 = pixleft[{yy, 2'b10}];
+    left3 = pixleft[{yy, 2'b11}];
 
-   suml_n = {2'b00, left0} + {2'b00, left1} +
-          {2'b00, left2} + {2'b00, left3};//....
-   pixleft_yyfull = pixleft[yyfull];
+    suml_n = {2'b00, left0} + {2'b00, left1} +
+           {2'b00, left2} + {2'b00, left3};//....
+    pixleft_yyfull = pixleft[yyfull];
 
-   dat0_n = pix[{yy, state[1:0], xx}];//....
+    dat0_n = pix[{yy, state[1:0], xx}];//....
 
 
-   //sumt....
-   sumt_n = {2'b00, TOPI[7:0]  } + {2'b00, TOPI[15:8]} + 
-            {2'b00, TOPI[23:16]} + {2'b00, TOPI[31:24]};
+    //sumt....
+    sumt_n = {2'b00, TOPI[7:0]  } + {2'b00, TOPI[15:8]} + 
+             {2'b00, TOPI[23:16]} + {2'b00, TOPI[31:24]};
 
-   //from lmode mem....
-   prevmode_n = (TOPMI < lmode[yy]) ? TOPMI : lmode[yy];
+    //from lmode mem....
+    prevmode_n = (TOPMI < lmode[yy]) ? TOPMI : lmode[yy];
+
+    case (tvalid_sel)
+       2'h0, 2'h1: tvalid_n = 1'b0;
+       2'h2 :      tvalid_n = 1'b1;
+       2'h3 :      tvalid_n = tvalid;
+    endcase
+
+    case (lvalid_sel)
+       2'h0, 2'h1: lvalid_n = 1'b0;
+       2'h2 :      lvalid_n = 1'b1;
+       2'h3 :      lvalid_n = lvalid;
+    endcase
+
+    case (fbpending_sel)
+       2'h0, 2'h1: fbpending_n = 1'b0;
+       2'h2 :      fbpending_n = 1'b1;
+       2'h3 :      fbpending_n = fbpending;
+    endcase
+
+    case (chreadyi_sel)
+       2'h0, 2'h1: chreadyi_n = 1'b0;
+       2'h2 :      chreadyi_n = 1'b1;
+       2'h3 :      chreadyi_n = chreadyi;
+    endcase
+
+    case (chreadyii_sel)
+       2'h0, 2'h1: chreadyii_n = 1'b0;
+       2'h2 :      chreadyii_n = 1'b1;
+       2'h3 :      chreadyii_n = chreadyii;
+    endcase
+
+    dconly_m = dconly_sel ? 1'b0 : 1'b1;
+    dconly_n = dconly_en  ? dconly_m: dconly;
 
 end
 
 //pipe_line_1
 always_ff @(posedge CLK) 
 begin
-   suml     <= suml_n;
-   dat0     <= dat0_n;
-   readyod  <= READYO; 
-   leftp    <= pixleft_yyfull;
+    //reg before pipeline
+    if(outf1_en)   outf1 <= 1'b1;
+    else           outf1 <= 1'b0;
 
-   //reg before pipeline
-   if(outf1_en)   outf1 <= 1'b1;
-   else           outf1 <= 1'b0;
+    // TOPI_reg with en signal....
+    if(topi_reg_en)
+    begin
+       topih    <= TOPI;
+       sumt     <= sumt_n;
+       prevmode <= prevmode_n;
+    end
+    else
+    begin
+       topih    <= topih   ;
+       sumt     <= sumt    ;
+       prevmode <= prevmode;
+    end
 
-   outf <= outf1;
+    //Data pass from pipline
+    suml     <= suml_n;
+    dat0     <= dat0_n; 
+    leftp    <= pixleft_yyfull;
 
-   // TOPI_reg with en signal....
-   if(topi_reg_en)
-   begin
-      topih    <= TOPI;
-      sumt     <= sumt_n;
-      prevmode <= prevmode_n;
-   end
-   else
-   begin
-      topih    <= topih   ;
-      sumt     <= sumt    ;
-      prevmode <= prevmode;
-   end
+    //controller signal pass from pipeline 
+    //and goes to controller
+    readyod     <= READYO;
+    outf        <= outf1;
+    tvalid      <= tvalid_n ;     
+    lvalid      <= lvalid_n ;
+    fbpending   <= fbpending_n ;      
+    chreadyi    <= chreadyi_n ;
+    chreadyii   <= chreadyii_n ;
+    dconly      <= dconly_n ;
+
+
 end
 
 always_comb
 begin
-   case (topih_mux_sel)//......
-      2'b11: sumtl_n = {1'b0, sumt} + {1'b0, suml} + 4;
-      2'b10: sumtl_n = {suml, 1'b0} + 4;			
-      2'b01: sumtl_n = {sumt, 1'b0} + 4;
-      2'b00: sumtl_n = {8'h80, 3'b000};
-   endcase
+    case (topih_mux_sel)//......
+        2'b11: sumtl_n = {1'b0, sumt} + {1'b0, suml} + 4;
+        2'b10: sumtl_n = {suml, 1'b0} + 4;			
+        2'b01: sumtl_n = {sumt, 1'b0} + 4;
+        2'b00: sumtl_n = {8'h80, 3'b000};
+    endcase
 end
 
 always_ff @(posedge CLK) 
 begin
-   if(topih_reg_en)//...
-   begin
-      sumtl <= sumt_n;
-      topii <= topih;
-   end
+    if(topih_reg_en)//...
+    begin
+        sumtl <= sumt_n;
+        topii <= topih;
+    end
 end
 
 
-//pipeline
+
+always_comb
+begin
+    //pipeline_1
+    vdif0_n = {1'b0, dat0[7:0]}   - {1'b0, topii[7:0]};
+    vdif1_n = {1'b0, dat0[15:8]}  - {1'b0, topii[15:8]};
+    vdif2_n = {1'b0, dat0[23:16]} - {1'b0, topii[23:16]}
+    vdif3_n = {1'b0, dat0[31:24]} - {1'b0, topii[31:24]}
+    
+    hdif0_n = {1'b0, dat0[7:0]}   - {1'b0, leftp};
+    hdif1_n = {1'b0, dat0[15:8]}  - {1'b0, leftp};
+    hdif2_n = {1'b0, dat0[23:16]} - {1'b0, leftp};
+    hdif3_n = {1'b0, dat0[31:24]} - {1'b0, leftp};
+    
+    ddif0_n = {1'b0, dat0[7:0]}   - {1'b0, sumtl[10:3]};
+    ddif1_n = {1'b0, dat0[15:8]}  - {1'b0, sumtl[10:3]};
+    ddif2_n = {1'b0, dat0[23:16]} - {1'b0, sumtl[10:3]};
+    ddif3_n = {1'b0, dat0[31:24]} - {1'b0, sumtl[10:3]};
+end
+
+
+//pipeline 2
 always_ff @(posedge CLK) 
 begin
    //pipeline_1
-   vdif0 <= {1'b0, dat0[7:0]}   - {1'b0, topii[7:0]};
-   vdif1 <= {1'b0, dat0[15:8]}  - {1'b0, topii[15:8]};
-   vdif2 <= {1'b0, dat0[23:16]} - {1'b0, topii[23:16]};
-   vdif3 <= {1'b0, dat0[31:24]} - {1'b0, topii[31:24]};
+    vdif0 <= vdif0_n;
+    vdif1 <= vdif1_n;
+    vdif2 <= vdif2_n;
+    vdif3 <= vdif3_n;
+    
+    hdif0 <= hdif0_n;
+    hdif1 <= hdif1_n;
+    hdif2 <= hdif2_n;
+    hdif3 <= hdif3_n;
+    leftpd <= leftp;
+    
+    ddif0 <= ddif0_n;
+    ddif1 <= ddif1_n;
+    ddif2 <= ddif2_n;
+    ddif3 <= ddif3_n;
+end
+
+always_comb
+begin
+    if (vdif0[8])  vabsdif0_n = 8'h00 - vdif0[7:0];
+    else           vabsdif0_n = vdif0[7:0];
+    if (vdif1[8])  vabsdif1_n = 8'h00 - vdif1[7:0];
+    else           vabsdif1_n = vdif1[7:0];
+    if (vdif2[8])  vabsdif2_n = 8'h00 - vdif2[7:0];
+    else           vabsdif2_n = vdif2[7:0];
+    if (vdif3[8])  vabsdif3_n = 8'h00 - vdif3[7:0];
+    else           vabsdif3_n = vdif3[7:0];
+
+
+    if (hdif0[8])  habsdif0_n = 8'h00 - hdif0[7:0];
+    else           habsdif0_n = hdif0[7:0];	
+    if (hdif1[8])  habsdif1_n = 8'h00 - hdif1[7:0];
+    else           habsdif1_n = hdif1[7:0];	
+    if (hdif2[8])  habsdif2_n = 8'h00 - hdif2[7:0];
+    else           habsdif2_n = hdif2[7:0];	
+    if (hdif3[8])  habsdif3_n = 8'h00 - hdif3[7:0];
+    else           habsdif3_n = hdif3[7:0];	
    
-   hdif0 <= {1'b0, dat0[7:0]}   - {1'b0, leftp};
-   hdif1 <= {1'b0, dat0[15:8]}  - {1'b0, leftp};
-   hdif2 <= {1'b0, dat0[23:16]} - {1'b0, leftp};
-   hdif3 <= {1'b0, dat0[31:24]} - {1'b0, leftp};
-   leftpd <= leftp;
-   
-   ddif0 <= {1'b0, dat0[7:0]}   - {1'b0, sumtl[10:3]};
-   ddif1 <= {1'b0, dat0[15:8]}  - {1'b0, sumtl[10:3]};
-   ddif2 <= {1'b0, dat0[23:16]} - {1'b0, sumtl[10:3]};
-   ddif3 <= {1'b0, dat0[31:24]} - {1'b0, sumtl[10:3]};
 
-   //pipeline_3
-   if (vdif0[8])  vabsdif0 <= 8'h00 - vdif0[7:0];
-   else           vabsdif0 <= vdif0[7:0];
-   if (vdif1[8])  vabsdif1 <= 8'h00 - vdif1[7:0];
-   else           vabsdif1 <= vdif1[7:0];
-   if (vdif2[8])  vabsdif2 <= 8'h00 - vdif2[7:0];
-   else           vabsdif2 <= vdif2[7:0];
-   if (vdif3[8])  vabsdif3 <= 8'h00 - vdif3[7:0];
-   else           vabsdif3 <= vdif3[7:0];
+    if (ddif0[8])  dabsdif0_n = 8'h00 - ddif0[7:0];
+    else           dabsdif0_n = ddif0[7:0];
+    if (ddif1[8])  dabsdif1_n = 8'h00 - ddif1[7:0];
+    else           dabsdif1_n = ddif1[7:0];
+    if (ddif2[8])  dabsdif2_n = 8'h00 - ddif2[7:0];
+    else           dabsdif2_n = ddif2[7:0];	
+    if (!ddif3[8]) dabsdif3_n = 8'h00 - ddif3[7:0];
+    else           dabsdif3_n = ddif3[7:0];
+end
 
+always_ff @(posedge CLK )
+begin
+    vabsdif0 <= vabsdif0_n;
+    vabsdif1 <= vabsdif1_n;
+    vabsdif2 <= vabsdif2_n;
+    vabsdif3 <= vabsdif3_n;
+    
+    habsdif0 <= habsdif0_n;
+    habsdif1 <= habsdif1_n;
+    habsdif2 <= habsdif2_n;
+    habsdif3 <= habsdif3_n;
+    
+    dabsdif0 <= dabsdif0_n;
+    dabsdif1 <= dabsdif1_n;
+    dabsdif2 <= dabsdif2_n;
+    dabsdif3 <= dabsdif3_n;
+end
 
-   if (hdif0[8])  habsdif0 <= 8'h00 - hdif0[7:0];
-   else           habsdif0 <= hdif0[7:0];	
-   if (hdif1[8])  habsdif1 <= 8'h00 - hdif1[7:0];
-   else           habsdif1 <= hdif1[7:0];	
-   if (hdif2[8])  habsdif2 <= 8'h00 - hdif2[7:0];
-   else           habsdif2 <= hdif2[7:0];	
-   if (hdif3[8])  habsdif3 <= 8'h00 - hdif3[7:0];
-   else           habsdif3 <= hdif3[7:0];	
-   
+always_comb
+begin
+    vtotdif_n = {8'h0, vabsdif0} + {8'h0, vabsdif1} +
+                {8'h0, vabsdif2} + {8'h0, vabsdif3} + vtotdif;
+    htotdif_n = {8'h0, habsdif0} + {8'h0, habsdif1} +
+                {8'h0, habsdif2} + {8'h0, habsdif3} + htotdif;
+    dtotdif_n = {8'h0, dabsdif0} + {8'h0, dabsdif1} +
+                {8'h0, dabsdif2} + {8'h0, dabsdif3} + dtotdif;
 
-   if (ddif0[8])  dabsdif0 <= 8'h00 - ddif0[7:0];
-   else           dabsdif0 <= ddif0[7:0];
-   if (ddif1[8])  dabsdif1 <= 8'h00 - ddif1[7:0];
-   else           dabsdif1 <= ddif1[7:0];
-   if (ddif2[8])  dabsdif2 <= 8'h00 - ddif2[7:0];
-   else           dabsdif2 <= ddif2[7:0];	
-   if (!ddif3[8]) dabsdif3 <= 8'h00 - ddif3[7:0];
-   else           dabsdif3 <= ddif3[7:0];
+    case (modeoi_sel)
+        2'h3, 2'h2:    modeoi_m = 4'h0;
+        2'h1:          modeoi_m = 4'h1;
+        2'h0:          modeoi_m = 4'h2;
+    endcase
+end
 
+//Dif REG and modeoi-REG
+always_ff @(posedge CLK)
+begin
+    if(dif_reg_rst)//....
+    begin 
+        vtotdif <= '0;
+        htotdif <= '0;
+        dtotdif <= '0;
+    end
+    else
+    begin 
 
+        if(dif_reg_en)
+        begin 
+            vtotdif <= vtotdif_n;
+            htotdif <= htotdif_n;
+            dtotdif <= dtotdif_n;
+        end
+        else 
+        begin
+            vtotdif <= vtotdif;
+            htotdif <= htotdif;
+            dtotdif <= dtotdif;         
+        end
 
-   //Dif REG 
-   if(dif_reg_rst)//....
-   begin 
-      vtotdif <= '0;
-      htotdif <= '0;
-      dtotdif <= '0;
-   end
-   else
-   begin 
-      if(dif_reg_en)
-      begin 
-         vtotdif <= {8'h0, vabsdif0} + {8'h0, vabsdif1} +
-                    {8'h0, vabsdif2} + {8'h0, vabsdif3} + vtotdif;
-         htotdif <= {8'h0, habsdif0} + {8'h0, habsdif1} +
-                    {8'h0, habsdif2} + {8'h0, habsdif3} + htotdif;
-         dtotdif <= {8'h0, dabsdif0} + {8'h0, dabsdif1} +
-                    {8'h0, dabsdif2} + {8'h0, dabsdif3} + dtotdif;
-      end
-      else 
-      begin
-         vtotdif <= vtotdif;
-         htotdif <= htotdif;
-         dtotdif <= dtotdif;         
-      end
-   end
-      
+    end
+
+    if(modeoi_en) modeoi <= modeoi_m;
+    else          modeoi <= modeoi;
+
 end
 
 always_comb 
 begin
-   case (modeoi)
-      4'h0: 
-      begin //....
-         DATAO_n = {vdif3, vdif2, vdif1, vdif0};
-         BASEO_n = topii;
-      end
-      4'h1: 
-      begin 
-         DATAO_n = {hdif3, hdif2, hdif1, hdif0};
-         BASEO_n = {leftpd, leftpd, leftpd, leftpd};
-      end
-      4'h2:
-      begin
-         DATAO_n = {ddif3, ddif2, ddif1, ddif0};
-         BASEO_n = {sumtl[10:3], sumtl[10:3], sumtl[10:3], sumtl[10:3]}; 
-      end
-      default:
-      begin 
-         DATAO_n = 'x;
-         BASEO_n = 'x;
-      end
-   endcase    
+    case (modeoi)
+        4'h0: 
+        begin //....
+            DATAO_n = {vdif3, vdif2, vdif1, vdif0};
+            BASEO_n = topii;
+        end
+        4'h1: 
+        begin 
+            DATAO_n = {hdif3, hdif2, hdif1, hdif0};
+            BASEO_n = {leftpd, leftpd, leftpd, leftpd};
+        end
+        4'h2:
+        begin
+            DATAO_n = {ddif3, ddif2, ddif1, ddif0};
+            BASEO_n = {sumtl[10:3], sumtl[10:3], sumtl[10:3], sumtl[10:3]}; 
+        end
+        default:
+        begin 
+            DATAO_n = '0;
+            BASEO_n = '0;
+        end
+    endcase
 
-   case (modeoi_sel)
-      2'b10, 2b11:   modeoi_m = 4'h0;
-      2'b01:          modeoi_m = 4'h1;
-      2'b00:          modeoi_m = 4'h2;
-      default:       modeoi_m = 4'hx;
-   endcase
+    case (R_P_mode_sel)
+        2'b00: RMODEO_m = modeoi[2:0] - 1;
+        2'b01: RMODEO_m = modeoi[2:0];
+        2'b10, 2b11: RMODEO_m = RMODEO;
+        default: 
+    endcase
 
-   case (R_P_mode_sel)
-      2'b00: RMODEO_m = modeoi[2:0] - 1;
-      2'b01: RMODEO_m = modeoi[2:0];
-      2'b10, 2b11: RMODEO_m = RMODEO;
-      default: 
-   endcase
-
-   PMODEO_m = (R_P_mode_sel[1]) ? 1'b1: 1'b0;
+    PMODEO_m = (R_P_mode_sel[1]) ? 1'b1: 1'b0;
 
 end
 
-//output reg
+//output reg's
 always_ff @(posedge CLK)
 begin
-   //en
+
    if(outf)
    begin
       DATAO    <= DATAO_n;
@@ -342,7 +440,7 @@ begin
       MSTROBEO <= 1'b0    ;
    end
 
-   //en
+
    if(en_12)
    begin
       RMODEO <= RMODEO_m;

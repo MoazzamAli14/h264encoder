@@ -1,4 +1,4 @@
-module add_1
+module h264intra4x4_controller
 (
     input logic clk,
     input logic reset,
@@ -62,7 +62,7 @@ begin
 
         S3:
         begin 
-            if (statei[5:4] == yy ) n_state = S3;
+            if (statei[5:4] == yy ) n_state = S3; //submb
             else                    n_state = S4 ; 
         end
 
@@ -118,7 +118,7 @@ begin
         end
         S15:
         begin
-            if(xx[0] && submb != 15)
+            if(xx[0] && submb != 15) //from submb
                 n_state = S2;
             else
                 n_state = S16;        
@@ -158,14 +158,13 @@ begin
     case (c_state)
         S0:
         begin 
-            out = 1'bx;
+            if(!STROBEI & NEWLINE) RST_0 = 1'b1;
+            else if (in) out = 1'b0;
+            else    out = 1'b1; 
         end
 
         S1:
         begin 
-            if(reset)out = 1'bx;
-            else if (in) out = 1'b0;
-            else    out = 1'b1; 
         end
 
         S2:
