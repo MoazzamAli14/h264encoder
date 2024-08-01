@@ -28,46 +28,96 @@ module h264intra4x4
 
 logic [31:0] pix [63:0] = '{default : '0};
 logic [7:0] pixleft [15:0] = '{default : '0};
-logic [7:0] pixlefttop = '0;
+logic [3:0] lmode [3:0] = '{default: 4'd9};  // lmode = 9       // doubt in this line 
+
 logic lvalid = '0;
+logic lvalid_n = '0;
+logic [1:0] lvalid_sel = '0;
+
 logic tvalid = '0;
+logic tvalid_n = '0;
+logic [1;0] tvalid_sel = '0;
+
 logic dconly = '0;
+logic dconly_n = '0;
+logic dconly_en = '0;
+logic [1:0] dconly_sel = '0;
+
+
 logic [31:0] topih = '0;
+logic        topih_en = '0;
+
 logic [31:0] topii = '0;
+logic topii_en = '0;
 
 logic [5:0] statei = '0;
 logic [4:0] state = '0;
 
 logic outf1 = '0;
+logic outf1_en = '0;
+
 logic outf = '0;
+
 logic chreadyi = '0;
-logic chreadyii = '0;
+logic chreadyi_n = '0;
+logic [1:0] chreadyi_sel = '0;
+logic chreadyii = '0;logic [3:0] lmode [3:0] = '{default: 4'd9};  // lmode = 9       // doubt in this line 
+
+logic chreadyii_n = '0;
+logic [1:0] chreadyii_sel = '0;
 logic readyod = '0;
 
 logic [3:0] submb = '0;
+logic submb_en ='0;
+
 logic [1:0] xx = '0;
 logic [1:0] yy = '0;
-logic [3:0] yyfull = '0; 
+logic [3:0] yyfull = '0;
+logic [7:0] pixleft_yyfull = '0; 
+
 logic [1:0] oldxx = '0;
+logic    oldxx_en = '0;
+
 logic [3:0] fbptr = '0;
+logic  fbptr_rst = '0;
+
 logic fbpending = '0;
+logic fbpending_n = '0;
+logic [1:0] fbpending_sel = '0;
 
 logic [3:0] modeoi = '0;
+logic [3:0] modeoi_m = '0;
+logic [1:0] modeoi_sel = '0;
+logic       modeoi_en = '0;
+
 logic [3:0] prevmode = '0;
-logic [3:0] lmode [3:0] = '{default: 4'd9};  // lmode = 9       // doubt in this line 
+logic [3:0] prevmode_n = '0;
+
 
 logic [31:0] dat0 = '0;
+logic [31:0] dat0_n = '0;
 
 logic [8:0] vdif0 = '0;
 logic [8:0] vdif1 = '0;
 logic [8:0] vdif2 = '0;
 logic [8:0] vdif3 = '0;
+//
+logic [8:0] vdif0_n = '0;
+logic [8:0] vdif1_n = '0;
+logic [8:0] vdif2_n = '0;
+logic [8:0] vdif3_n = '0;
 
 logic [7:0] vabsdif0 = '0;
 logic [7:0] vabsdif1 = '0;
 logic [7:0] vabsdif2 = '0;
 logic [7:0] vabsdif3 = '0;
 logic [11:0] vtotdif = '0;
+//
+logic [7:0] vabsdif0_n = '0;
+logic [7:0] vabsdif1_n = '0;
+logic [7:0] vabsdif2_n = '0;
+logic [7:0] vabsdif3_n = '0;
+logic [11:0] vtotdif_n = '0;
 
 logic [7:0] leftp = '0;
 logic [7:0] leftpd = '0;
@@ -80,6 +130,16 @@ logic [7:0] habsdif1 = '0;
 logic [7:0] habsdif2 = '0;
 logic [7:0] habsdif3 = '0;
 logic [11:0] htotdif = '0;
+//
+logic [8:0] hdif0_n = '0;
+logic [8:0] hdif1_n = '0;
+logic [8:0] hdif2_n = '0;
+logic [8:0] hdif3_n = '0;
+logic [7:0] habsdif0_n = '0;
+logic [7:0] habsdif1_n = '0;
+logic [7:0] habsdif2_n = '0;
+logic [7:0] habsdif3_n = '0;
+logic [11:0] htotdif_n = '0;
 
 logic [7:0] left0 = '0;
 logic [7:0] left1 = '0;
@@ -94,29 +154,57 @@ logic [7:0] dabsdif1 = '0;
 logic [7:0] dabsdif2 = '0;
 logic [7:0] dabsdif3 = '0;
 logic [11:0] dtotdif = '0;
+//
+logic [8:0] ddif0_n = '0;
+logic [8:0] ddif1_n = '0;
+logic [8:0] ddif2_n = '0;
+logic [8:0] ddif3_n = '0;
+logic [7:0] dabsdif0_n = '0;
+logic [7:0] dabsdif1_n = '0;
+logic [7:0] dabsdif2_n = '0;
+logic [7:0] dabsdif3_n = '0;
+logic [11:0] dtotdif_n = '0;
+
+logic totdif_en;
+logic totdif_rst;
    
 logic [9:0] sumt = '0;
 logic [9:0] suml = '0;
 logic [10:0] sumtl = '0;
+//
+logic [9:0] sumt_n = '0;
+logic [9:0] suml_n = '0;
+logic [10:0] sumtl_n = '0;
+logic [1:0] sumtl_sel = '0;
+
+logic [35:0] DATAO_n;
+logic [31:0] BASEO_n;
+logic [1:0] R_P_mode_sel;
+logic [2:0] RMODEO_m;
+logic PMODEO_m;
+logic rst_0;
+logic en_12;
+logic xxo_sel;
+logic READYI_sel;
 
 integer xi, yi;
 
 // Memory part 
 always_ff @(posedge CLK ) 
 begin
-    //submb_counter..........
-    if(submb_en)   submb <= submb+1;
-    else 		      submb <= submb;
+    //submb_counter
+    if(submb_en) submb <= submb+1;
+    else 		 submb <= submb;
 
-    //fbptr counter.........
-    if(fbptr_rst) 		   fbptr <= {yy, 2'b00};
+    //fbptr counter
+    if(fbptr_rst) 		fbptr <= {yy, 2'b00};
     else if (FBSTROBE)	fbptr <= fbptr + 1;
-    else				      fbptr <= fbptr;
+    else				fbptr <= fbptr;
 
     //statei_counter
-    if(RST_0)	      statei <= 6'b000000;
-    else if (STROBEI)	statei <= statei + 1;
-    else				   statei <= statei;
+    if(rst_0)	      statei <= 6'b000000;
+    else if (STROBEI) statei <= statei + 1;
+    else			  statei <= statei;
 
     //pixleft 8x16 mem
     //FBSTROBE-->work as write signal
@@ -125,13 +213,18 @@ begin
     // pix 32x64 mem, write on STROBEI
     if (STROBEI) pix[statei] <= DATAI;
 
-    //lmode 4x4, write on en_12.......
+    //lmode 4x4, write on en_12
     if (en_12) lmode[yy] <= modeoi;
 
 end
 
 always_comb 
 begin
+    xx = {submb[2], submb[0]};
+    yy = {submb[3], submb[1]};
+
+    yyfull = {yy, state[1:0]}; ///............?
+
     //output from pixlef mem........
     left0 = pixleft[{yy, 2'b00}];
     left1 = pixleft[{yy, 2'b01}];
@@ -139,17 +232,18 @@ begin
     left3 = pixleft[{yy, 2'b11}];
 
     suml_n = {2'b00, left0} + {2'b00, left1} +
-           {2'b00, left2} + {2'b00, left3};//....
+           {2'b00, left2} + {2'b00, left3}; 
+
     pixleft_yyfull = pixleft[yyfull];
 
-    dat0_n = pix[{yy, state[1:0], xx}];//....
+    dat0_n = pix[{yy, state[1:0], xx}];//....????????? controller sa a ne chaya
 
 
-    //sumt....
+    //sumt
     sumt_n = {2'b00, TOPI[7:0]  } + {2'b00, TOPI[15:8]} + 
              {2'b00, TOPI[23:16]} + {2'b00, TOPI[31:24]};
 
-    //from lmode mem....
+    //from lmode mem
     prevmode_n = (TOPMI < lmode[yy]) ? TOPMI : lmode[yy];
 
     case (tvalid_sel)
@@ -194,8 +288,8 @@ begin
     if(outf1_en)   outf1 <= 1'b1;
     else           outf1 <= 1'b0;
 
-    // TOPI_reg with en signal....
-    if(topi_reg_en)
+    // TOPI_reg with en signal
+    if(topih_en)
     begin
        topih    <= TOPI;
        sumt     <= sumt_n;
@@ -229,7 +323,7 @@ end
 
 always_comb
 begin
-    case (topih_mux_sel)//......
+    case (sumtl_sel)
         2'b11: sumtl_n = {1'b0, sumt} + {1'b0, suml} + 4;
         2'b10: sumtl_n = {suml, 1'b0} + 4;			
         2'b01: sumtl_n = {sumt, 1'b0} + 4;
@@ -239,9 +333,9 @@ end
 
 always_ff @(posedge CLK) 
 begin
-    if(topih_reg_en)//...
+    if(topii_en)
     begin
-        sumtl <= sumt_n;
+        sumtl <= sumtl_n;
         topii <= topih;
     end
 end
@@ -358,7 +452,7 @@ end
 //Dif REG and modeoi-REG
 always_ff @(posedge CLK)
 begin
-    if(dif_reg_rst)//....
+    if(totdif_rst)
     begin 
         vtotdif <= '0;
         htotdif <= '0;
@@ -367,7 +461,7 @@ begin
     else
     begin 
 
-        if(dif_reg_en)
+        if(totdif_en)
         begin 
             vtotdif <= vtotdif_n;
             htotdif <= htotdif_n;
@@ -427,48 +521,48 @@ end
 always_ff @(posedge CLK)
 begin
 
-   if(outf)
-   begin
-      DATAO    <= DATAO_n;
-      BASEO    <= BASEO_n;
-      MSTROBEO <= ~outf1;
-   end
-   else
-   begin
-      DATAO    <= DATAO   ;
-      BASEO    <= BASEO   ;
-      MSTROBEO <= 1'b0    ;
-   end
+    if(outf)
+    begin
+        DATAO    <= DATAO_n;
+        BASEO    <= BASEO_n;
+        MSTROBEO <= ~outf1;
+    end
+    else
+    begin
+        DATAO    <= DATAO   ;
+        BASEO    <= BASEO   ;
+        MSTROBEO <= 1'b0    ;
+    end
 
 
-   if(en_12)
-   begin
-      RMODEO <= RMODEO_m;
-      PMODEO <= PMODEO_m;
-   end
-   else
-   begin
-      RMODEO <= RMODEO;
-      PMODEO <= PMODEO;
-   end
+    if(en_12)
+    begin
+        RMODEO <= RMODEO_m;
+        PMODEO <= PMODEO_m;
+    end
+    else
+    begin
+        RMODEO <= RMODEO;
+        PMODEO <= PMODEO;
+    end
 
-   //STROBEO
-   if(RST_0)   STROBEO <= 1'b0;
-   if (outf)   STROBEO <= 1'b1;
-   else        STROBEO <= 1'b0;
+    //STROBEO
+    if(rst_0)   STROBEO <= 1'b0;
+    if (outf)   STROBEO <= 1'b1;
+    else        STROBEO <= 1'b0;
 
-   //OLDXX
-   if (oldxx_en) oldxx <= xx;
-   else          oldxx <= oldxx;
+    //OLDXX
+    if (oldxx_en) oldxx <= xx;
+    else          oldxx <= oldxx;
 
 end
 
 //output
 always_comb 
 begin
-   XXO      = xxo_sel ? xx: oldxx;
-   MODEO    = modeoi;
-   READYI   = READYI_sel ? 1'b1: 1'b0;
+    XXO      = xxo_sel ? xx: oldxx;
+    MODEO    = modeoi;
+    READYI   = READYI_sel ? 1'b1: 1'b0;
 end
 
     
