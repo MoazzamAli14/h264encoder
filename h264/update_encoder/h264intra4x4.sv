@@ -25,46 +25,45 @@ module h264intra4x4
    output logic [2:0] RMODEO = 3'd0,   // rem_i4x4_pred_mode_flag
    output logic CHREADY = 1'b0         // ready line to chroma
 );
-
+state
 logic [31:0] pix [63:0] = '{default : '0};
 logic [7:0] pixleft [15:0] = '{default : '0};
 logic [3:0] lmode [3:0] = '{default: 4'd9};  // lmode = 9       // doubt in this line 
 
-logic lvalid = '0;
-logic lvalid_n = '0;
-logic [1:0] lvalid_sel = '0;
+logic lvalid            = '0;
+logic lvalid_n          = '0;
+logic [1:0] lvalid_sel  = '0;
 
-logic tvalid = '0;
-logic tvalid_n = '0;
-logic [1;0] tvalid_sel = '0;
+logic tvalid            = '0;
+logic tvalid_n          = '0;
+logic [1:0] tvalid_sel  = '0;
 
-logic dconly = '0;
-logic dconly_n = '0;
-logic dconly_sel2 = '0;
-logic dconly_sel1 = '0;
+logic dconly        = '0;
+logic dconly_n      = '0;
+logic dconly_sel2   = '0;
+logic dconly_sel1   = '0;
 
 
 logic [31:0] topih = '0;
-logic        topih_en = '0;
+logic     topih_en = '0;
 
 logic [31:0] topii = '0;
-logic topii_en = '0;
-
+logic     topii_en = '0;
+  
 logic [5:0] statei = '0;
-logic [4:0] state = '0;
 
-logic outf1 = '0;
+logic outf1    = '0;
 logic outf1_en = '0;
 
 logic outf = '0;
 
-logic chreadyi = '0;
-logic chreadyi_n = '0;
+logic chreadyi           = '0;
+logic chreadyi_n         = '0;
 logic [1:0] chreadyi_sel = '0;
-logic chreadyii = '0;logic [3:0] lmode [3:0] = '{default: 4'd9};  // lmode = 9       // doubt in this line 
 
-logic chreadyii_n = '0;
-logic [1:0] chreadyii_sel = '0;
+logic chreadyii             = '0;
+logic chreadyii_n           = '0;
+logic [1:0] chreadyii_sel   = '0;
 logic readyod = '0;
 
 logic [3:0] submb = '0;
@@ -165,27 +164,26 @@ logic [7:0] dabsdif2_n = '0;
 logic [7:0] dabsdif3_n = '0;
 logic [11:0] dtotdif_n = '0;
 
-logic totdif_en;
-logic totdif_rst;
+logic totdif_en  = '0;
+logic totdif_rst = '0;
    
-logic [9:0] sumt = '0;
-logic [9:0] suml = '0;
-logic [10:0] sumtl = '0;
+logic [9:0] sumt    = '0;
+logic [9:0] suml    = '0;
+logic [10:0] sumtl  = '0;
 //
 logic [9:0] sumt_n = '0;
 logic [9:0] suml_n = '0;
-logic [10:0] sumtl_n = '0;
+logic [10:0] sumtl_n  = '0;
 logic [1:0] sumtl_sel = '0;
 
-logic [35:0] DATAO_n;
-logic [31:0] BASEO_n;
-logic [1:0] R_P_mode_sel;
-logic [2:0] RMODEO_m;
-logic PMODEO_m;
-logic rst_0;
-logic en_12;
-logic xxo_sel;
-logic READYI_sel;
+logic [35:0] DATAO_n        = '0;
+logic [31:0] BASEO_n        = '0;
+logic [1:0] R_P_mode_sel    = '0;
+logic [2:0] RMODEO_m        = '0;
+logic PMODEO_m  = '0;
+logic rst_0     = '0;
+logic en_12     = '0;
+logic xxo_sel   = '0;
 
 integer xi, yi;
 
@@ -223,9 +221,7 @@ begin
     xx = {submb[2], submb[0]};
     yy = {submb[3], submb[1]};
 
-    yyfull = {yy, state[1:0]}; ///............?
-
-    //output from pixlef mem........
+    //output from pixlef mem
     left0 = pixleft[{yy, 2'b00}];
     left1 = pixleft[{yy, 2'b01}];
     left2 = pixleft[{yy, 2'b10}];
@@ -236,7 +232,7 @@ begin
 
     pixleft_yyfull = pixleft[yyfull];
 
-    dat0_n = pix[{yy, state[1:0], xx}];//....????????? controller sa a ne chaya
+    dat0_n = pix[{yyfull, xx}];
 
 
     //sumt
@@ -562,7 +558,6 @@ always_comb
 begin
     XXO      = xxo_sel ? xx: oldxx;
     MODEO    = modeoi;
-    READYI   = READYI_sel ? 1'b1: 1'b0;
 end
 
     
