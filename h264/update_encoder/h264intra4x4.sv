@@ -25,7 +25,7 @@ module h264intra4x4
    output logic [2:0] RMODEO = 3'd0,   // rem_i4x4_pred_mode_flag
    output logic CHREADY = 1'b0         // ready line to chroma
 );
-state
+
 logic [31:0] pix [63:0] = '{default : '0};
 logic [7:0] pixleft [15:0] = '{default : '0};
 logic [3:0] lmode [3:0] = '{default: 4'd9};  // lmode = 9       // doubt in this line 
@@ -40,6 +40,7 @@ logic [1:0] tvalid_sel  = '0;
 
 logic dconly        = '0;
 logic dconly_n      = '0;
+logic dconly_m      = '0;
 logic dconly_sel2   = '0;
 logic dconly_sel1   = '0;
 
@@ -187,6 +188,59 @@ logic xxo_sel   = '0;
 
 integer xi, yi;
 
+h264intra4x4_controller CONT
+(
+    CLK,
+    READYO,
+    readyod,
+    FBSTROBE,
+    fbpending,
+    chreadyi,
+    chreadyii,
+    STROBEI,
+    NEWLINE,
+    NEWSLICE,
+    outf1,
+    outf,
+    lvalid,
+    tvalid,
+    dconly,
+    statei,
+    submb, //xx,yy these also create here with submb
+    modeoi,
+    prevmode,
+    vtotdif,
+    htotdif,
+    dtotdif,
+
+    rst_0,
+    oldxx_en,
+    xxo_sel,
+    topih_en,
+    topii_en,
+    totdif_en,
+    totdif_rst,
+    dconly_sel1,
+    dconly_sel2,
+    modeoi_en,
+    en_12,
+    outf1_en,
+    submb_en,
+    fbptr_rst,
+    XXINC,
+    CHREADY,
+    READYI ,
+    modeoi_sel,
+    tvalid_sel,
+    lvalid_sel,
+    fbpending_sel,
+    chreadyi_sel,
+    chreadyii_sel,
+    sumtl_sel,
+    yyfull,
+    R_P_mode_sel
+);
+
 // Memory part 
 always_ff @(posedge CLK ) 
 begin
@@ -243,33 +297,33 @@ begin
     prevmode_n = (TOPMI < lmode[yy]) ? TOPMI : lmode[yy];
 
     case (tvalid_sel)
-       2'h0, 2'h1: tvalid_n = 1'b0;
+       2'h3, 2'h1: tvalid_n = 1'b0;
        2'h2 :      tvalid_n = 1'b1;
-       2'h3 :      tvalid_n = tvalid;
+       2'h0 :      tvalid_n = tvalid;
     endcase
 
     case (lvalid_sel)
-       2'h0, 2'h1: lvalid_n = 1'b0;
+       2'h3, 2'h1: lvalid_n = 1'b0;
        2'h2 :      lvalid_n = 1'b1;
-       2'h3 :      lvalid_n = lvalid;
+       2'h0 :      lvalid_n = lvalid;
     endcase
 
     case (fbpending_sel)
-       2'h0, 2'h1: fbpending_n = 1'b0;
+       2'h3, 2'h1: fbpending_n = 1'b0;
        2'h2 :      fbpending_n = 1'b1;
-       2'h3 :      fbpending_n = fbpending;
+       2'h0 :      fbpending_n = fbpending;
     endcase
 
     case (chreadyi_sel)
-       2'h0, 2'h1: chreadyi_n = 1'b0;
+       2'h3, 2'h1: chreadyi_n = 1'b0;
        2'h2 :      chreadyi_n = 1'b1;
-       2'h3 :      chreadyi_n = chreadyi;
+       2'h0 :      chreadyi_n = chreadyi;
     endcase
 
     case (chreadyii_sel)
-       2'h0, 2'h1: chreadyii_n = 1'b0;
+       2'h3, 2'h1: chreadyii_n = 1'b0;
        2'h2 :      chreadyii_n = 1'b1;
-       2'h3 :      chreadyii_n = chreadyii;
+       2'h0 :      chreadyii_n = chreadyii;
     endcase
 
     dconly_m = dconly_sel2 ? 1'b0 : 1'b1;
@@ -343,8 +397,8 @@ begin
     //pipeline_1
     vdif0_n = {1'b0, dat0[7:0]}   - {1'b0, topii[7:0]};
     vdif1_n = {1'b0, dat0[15:8]}  - {1'b0, topii[15:8]};
-    vdif2_n = {1'b0, dat0[23:16]} - {1'b0, topii[23:16]}
-    vdif3_n = {1'b0, dat0[31:24]} - {1'b0, topii[31:24]}
+    vdif2_n = {1'b0, dat0[23:16]} - {1'b0, topii[23:16]};
+    vdif3_n = {1'b0, dat0[31:24]} - {1'b0, topii[31:24]};
     
     hdif0_n = {1'b0, dat0[7:0]}   - {1'b0, leftp};
     hdif1_n = {1'b0, dat0[15:8]}  - {1'b0, leftp};
@@ -505,8 +559,7 @@ begin
     case (R_P_mode_sel)
         2'b00: RMODEO_m = modeoi[2:0] - 1;
         2'b01: RMODEO_m = modeoi[2:0];
-        2'b10, 2b11: RMODEO_m = RMODEO;
-        default: 
+        2'b10, 2'b11: RMODEO_m = RMODEO;
     endcase
 
     PMODEO_m = (R_P_mode_sel[1]) ? 1'b1: 1'b0;

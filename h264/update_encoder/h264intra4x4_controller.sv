@@ -39,7 +39,7 @@ module h264intra4x4_controller
     output logic fbptr_rst = '0,
     output logic XXINC = '0,
     output logic CHREADY = '0,
-    output logic READYI_sel = '0,
+    output logic READYI  = '0,
     output logic [1:0] modeoi_sel = '0,
     output logic [1:0] tvalid_sel = '0,
     output logic [1:0] lvalid_sel = '0,
@@ -47,7 +47,8 @@ module h264intra4x4_controller
     output logic [1:0] chreadyi_sel = '0,
     output logic [1:0] chreadyii_sel = '0,
     output logic [1:0] sumtl_sel = '0,
-    output logic [1:0] yyfull = '0
+    output logic [3:0] yyfull = '0,
+    output logic [1:0] R_P_mode_sel = '0
 );
 
 logic [1:0] xx      = '0;
@@ -83,7 +84,7 @@ parameter S20   =   5'd20;
 
 
 //state register
-always_ff @ (posedge clk)
+always_ff @ (posedge CLK)
 begin
     //reset is active high or posedge reset
     if (!STROBEI & NEWLINE) c_state <= S0;
@@ -386,7 +387,6 @@ begin
             fbptr_rst   = '0;
             XXINC       = '0;
             CHREADY     = '0;
-            READYI_sel  = '0;
             modeoi_sel  = '0;
             tvalid_sel  = '0;
             lvalid_sel  = '0;
