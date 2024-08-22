@@ -26,49 +26,37 @@ module h264intra4x4
    output logic CHREADY = 1'b0         // ready line to chroma
 );
 
+//logic [31:0] counter = '0; 
+
 logic [31:0] pix [63:0] = '{default : '0};
 logic [7:0] pixleft [15:0] = '{default : '0};
 logic [3:0] lmode [3:0] = '{default: 4'd9};  // lmode = 9       // doubt in this line 
 
 logic lvalid            = '0;
-logic lvalid_n          = '0;
-logic [1:0] lvalid_sel  = '0;
 
 logic tvalid            = '0;
-logic tvalid_n          = '0;
-logic [1:0] tvalid_sel  = '0;
 
 logic dconly        = '0;
-logic dconly_n      = '0;
-logic dconly_m      = '0;
-logic dconly_sel2   = '0;
-logic dconly_sel1   = '0;
-
 
 logic [31:0] topih = '0;
-logic     topih_en = '0;
 
 logic [31:0] topii = '0;
-logic     topii_en = '0;
+
   
 logic [5:0] statei = '0;
 
 logic outf1    = '0;
-logic outf1_en = '0;
 
 logic outf = '0;
 
 logic chreadyi           = '0;
-logic chreadyi_n         = '0;
-logic [1:0] chreadyi_sel = '0;
+
 
 logic chreadyii             = '0;
-logic chreadyii_n           = '0;
-logic [1:0] chreadyii_sel   = '0;
+
 logic readyod = '0;
 
 logic [3:0] submb = '0;
-logic submb_en ='0;
 
 logic [1:0] xx = '0;
 logic [1:0] yy = '0;
@@ -76,36 +64,23 @@ logic [3:0] yyfull = '0;
 logic [7:0] pixleft_yyfull = '0; 
 
 logic [1:0] oldxx = '0;
-logic    oldxx_en = '0;
 
 logic [3:0] fbptr = '0;
-logic  fbptr_rst = '0;
 
 logic fbpending = '0;
-logic fbpending_n = '0;
-logic [1:0] fbpending_sel = '0;
 
 logic [3:0] modeoi = '0;
-logic [3:0] modeoi_m = '0;
-logic [1:0] modeoi_sel = '0;
-logic       modeoi_en = '0;
 
 logic [3:0] prevmode = '0;
-logic [3:0] prevmode_n = '0;
 
 
 logic [31:0] dat0 = '0;
-logic [31:0] dat0_n = '0;
 
 logic [8:0] vdif0 = '0;
 logic [8:0] vdif1 = '0;
 logic [8:0] vdif2 = '0;
 logic [8:0] vdif3 = '0;
 //
-logic [8:0] vdif0_n = '0;
-logic [8:0] vdif1_n = '0;
-logic [8:0] vdif2_n = '0;
-logic [8:0] vdif3_n = '0;
 
 logic [7:0] vabsdif0 = '0;
 logic [7:0] vabsdif1 = '0;
@@ -113,11 +88,7 @@ logic [7:0] vabsdif2 = '0;
 logic [7:0] vabsdif3 = '0;
 logic [11:0] vtotdif = '0;
 //
-logic [7:0] vabsdif0_n = '0;
-logic [7:0] vabsdif1_n = '0;
-logic [7:0] vabsdif2_n = '0;
-logic [7:0] vabsdif3_n = '0;
-logic [11:0] vtotdif_n = '0;
+
 
 logic [7:0] leftp = '0;
 logic [7:0] leftpd = '0;
@@ -131,15 +102,6 @@ logic [7:0] habsdif2 = '0;
 logic [7:0] habsdif3 = '0;
 logic [11:0] htotdif = '0;
 //
-logic [8:0] hdif0_n = '0;
-logic [8:0] hdif1_n = '0;
-logic [8:0] hdif2_n = '0;
-logic [8:0] hdif3_n = '0;
-logic [7:0] habsdif0_n = '0;
-logic [7:0] habsdif1_n = '0;
-logic [7:0] habsdif2_n = '0;
-logic [7:0] habsdif3_n = '0;
-logic [11:0] htotdif_n = '0;
 
 logic [7:0] left0 = '0;
 logic [7:0] left1 = '0;
@@ -155,23 +117,16 @@ logic [7:0] dabsdif2 = '0;
 logic [7:0] dabsdif3 = '0;
 logic [11:0] dtotdif = '0;
 //
-logic [8:0] ddif0_n = '0;
-logic [8:0] ddif1_n = '0;
-logic [8:0] ddif2_n = '0;
-logic [8:0] ddif3_n = '0;
-logic [7:0] dabsdif0_n = '0;
-logic [7:0] dabsdif1_n = '0;
-logic [7:0] dabsdif2_n = '0;
-logic [7:0] dabsdif3_n = '0;
-logic [11:0] dtotdif_n = '0;
 
-logic totdif_en  = '0;
-logic totdif_rst = '0;
+
+
    
 logic [9:0] sumt    = '0;
 logic [9:0] suml    = '0;
 logic [10:0] sumtl  = '0;
 //
+
+
 logic [9:0] sumt_n = '0;
 logic [9:0] suml_n = '0;
 logic [10:0] sumtl_n  = '0;
@@ -186,7 +141,70 @@ logic rst_0     = '0;
 logic en_12     = '0;
 logic xxo_sel   = '0;
 
-integer xi, yi;
+logic totdif_en  = '0;
+logic totdif_rst = '0;
+logic lvalid_n          = '0;
+logic [1:0] lvalid_sel  = '0;
+logic tvalid_n          = '0;
+logic [1:0] tvalid_sel  = '0;
+logic dconly_n      = '0;
+logic dconly_m      = '0;
+logic dconly_sel2   = '0;
+logic dconly_sel1   = '0;
+logic     topih_en = '0;
+logic [3:0] prevmode_n = '0;
+logic [3:0] modeoi_m = '0;
+logic [1:0] modeoi_sel = '0;
+logic       modeoi_en = '0;
+logic fbpending_n = '0;
+logic [1:0] fbpending_sel = '0;
+logic  fbptr_rst = '0;
+logic    oldxx_en = '0;
+logic submb_en ='0;
+logic outf1_en = '0;
+logic     topii_en = '0;
+logic chreadyi_n         = '0;
+logic [1:0] chreadyi_sel = '0;
+logic chreadyii_n           = '0;
+logic [1:0] chreadyii_sel   = '0;
+logic [31:0] dat0_n = '0;
+logic [8:0] vdif0_n = '0;
+logic [8:0] vdif1_n = '0;
+logic [8:0] vdif2_n = '0;
+logic [8:0] vdif3_n = '0;
+
+logic [7:0] vabsdif0_n = '0;
+logic [7:0] vabsdif1_n = '0;
+logic [7:0] vabsdif2_n = '0;
+logic [7:0] vabsdif3_n = '0;
+logic [11:0] vtotdif_n = '0;
+logic [8:0] hdif0_n = '0;
+logic [8:0] hdif1_n = '0;
+logic [8:0] hdif2_n = '0;
+logic [8:0] hdif3_n = '0;
+logic [7:0] habsdif0_n = '0;
+logic [7:0] habsdif1_n = '0;
+logic [7:0] habsdif2_n = '0;
+logic [7:0] habsdif3_n = '0;
+logic [11:0] htotdif_n = '0;
+
+logic [8:0] ddif0_n = '0;
+logic [8:0] ddif1_n = '0;
+logic [8:0] ddif2_n = '0;
+logic [8:0] ddif3_n = '0;
+logic [7:0] dabsdif0_n = '0;
+logic [7:0] dabsdif1_n = '0;
+logic [7:0] dabsdif2_n = '0;
+logic [7:0] dabsdif3_n = '0;
+logic [11:0] dtotdif_n = '0;
+
+//int fo;
+//int fi;
+//initial
+//begin
+//    //fo = $fopen ("output_file_up.log", "w");
+//    fi = $fopen ("input_file.log", "w");
+//end
 
 h264intra4x4_controller CONT
 (
@@ -244,6 +262,11 @@ h264intra4x4_controller CONT
 // Memory part 
 always_ff @(posedge CLK ) 
 begin
+//    $fdisplay(fi,"NEWSLICE <= %h; NEWLINE <= %h; STROBEI <= %h; DATAI <= 32'h%h;  TOPI <= 32'h%h; TOPMI <= 4'h%h; FEEDBI <= 8'h%h; FBSTROBE <= %h; READYO <= %h; time = %0t;
+//@(posedge CLK);", NEWSLICE,NEWLINE, STROBEI, DATAI,TOPI, TOPMI,FEEDBI, FBSTROBE, READYO , $time);
+    
+    //counter <= counter + 1;
+    
     //submb_counter
     if(submb_en) submb <= submb+1;
     else 		 submb <= submb;
@@ -272,6 +295,7 @@ end
 
 always_comb 
 begin
+    
     xx = {submb[2], submb[0]};
     yy = {submb[3], submb[1]};
 
@@ -461,7 +485,7 @@ begin
     else           dabsdif1_n = ddif1[7:0];
     if (ddif2[8])  dabsdif2_n = 8'h00 - ddif2[7:0];
     else           dabsdif2_n = ddif2[7:0];	
-    if (!ddif3[8]) dabsdif3_n = 8'h00 - ddif3[7:0];
+    if (ddif3[8]) dabsdif3_n = 8'h00 - ddif3[7:0];
     else           dabsdif3_n = ddif3[7:0];
 end
 
@@ -493,9 +517,9 @@ begin
                 {8'h0, dabsdif2} + {8'h0, dabsdif3} + dtotdif;
 
     case (modeoi_sel)
-        2'h3, 2'h2:    modeoi_m = 4'h0;
+        2'h3, 2'h2:    modeoi_m = 4'h2;
         2'h1:          modeoi_m = 4'h1;
-        2'h0:          modeoi_m = 4'h2;
+        2'h0:          modeoi_m = 4'h0;
     endcase
 end
 
@@ -577,7 +601,7 @@ begin
         MSTROBEO <= ~outf1;
     end
     else
-    begin
+    begin   
         DATAO    <= DATAO   ;
         BASEO    <= BASEO   ;
         MSTROBEO <= 1'b0    ;
@@ -603,7 +627,21 @@ begin
     //OLDXX
     if (oldxx_en) oldxx <= xx;
     else          oldxx <= oldxx;
-
+//    $fdisplay(fo,"READYI <= %h; XXO <= 2'h%h; XXINC <= %h; STROBEO <= %h; DATAO <= 36'h%h; BASEO <= 32'h%h; MSTROBEO <= %h; MODEO <= 4'h%h; PMODEO <= %h; RMODEO <= 3'h%h; CHREADY <= %h; 
+//@(posedge CLK);",READYI, XXO , XXINC , STROBEO , DATAO , BASEO , MSTROBEO , MODEO , PMODEO, RMODEO ,CHREADY);
+/*
+$fdisplay(fi,"counter = %d, lvalid = %h; tvalid = %h; dconly = %h; outf1 = %h; outf = %h; chreadyi = %h; chreadyii = %h; readyod = %h; fbpending = %h;
+xx = 2'h%h; yy = 2'h%h; oldxx = 2'h%h;
+submb = 3'h%h; yyfull = 3'h%h; fbptr = 3'h%h; modeoi = 3'h%h; prevmode = 3'h%h; statei = 6'h%h;
+vabsdif0 = 8'h%h; vabsdif1 = 8'h%h; vabsdif2 = 8'h%h; vabsdif3 = 8'h%h; leftp = 8'h%h; leftpd = 8'h%h; habsdif0 = 8'h%h; 
+habsdif1 = 8'h%h; habsdif2 = 8'h%h; habsdif3 = 8'h%h; vdif0 = 9'h%h; vdif1 = 9'h%h; vdif2 = 9'h%h; vdif3 = 9'h%h; 
+hdif0 = 9'h%h; hdif1 = 9'h%h; hdif2 = 9'h%h; hdif3 = 9'h%h; ddif0 = 9'h%h; ddif1 = 9'h%h; ddif2 = 9'h%h; ddif3 = 9'h%h;
+sumt = 10'h%h; suml = 10'h%h; sumtl = 11'h%h; topih = 32'h%h; topii = 32'h%h;",counter ,lvalid, tvalid, dconly, outf1, outf, chreadyi, chreadyii, readyod, fbpending,
+xx, yy, oldxx, submb, yyfull, fbptr, modeoi, prevmode, statei,
+vabsdif0, vabsdif1, vabsdif2, vabsdif3, leftp, leftpd, habsdif0, habsdif1, habsdif2, habsdif3,
+vdif0, vdif1, vdif2, vdif3, hdif0, hdif1, hdif2, hdif3, ddif0, ddif1, ddif2, ddif3,
+sumt, suml, sumtl, topih, topii);
+*/
 end
 
 //output

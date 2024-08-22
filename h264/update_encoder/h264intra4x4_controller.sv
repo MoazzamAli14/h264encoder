@@ -53,8 +53,8 @@ module h264intra4x4_controller
 
 logic [1:0] xx      = '0;
 logic [1:0] yy      = '0;
-logic [1:0] l_xx    = '0;
-logic [1:0] t_yy    = '0;
+logic l_xx    = '0;
+logic t_yy    = '0;
 logic [4:0] c_state = '0;
 logic [4:0] n_state = '0;
 logic fbpending_en  = '0;
@@ -197,7 +197,7 @@ begin
         end
         S20:
         begin 
-            n_state = S20;
+            n_state = S0;
         end
 
         default: 
@@ -213,8 +213,8 @@ always_comb
 begin
     xx           = {submb[2], submb[0]};
     yy           = {submb[3], submb[1]};
-    t_yy         = (tvalid || yy != 0);
-    l_xx         = (lvalid || xx != 0);
+    t_yy         = (tvalid || yy != 0); // 0 0
+    l_xx         = (lvalid || xx != 0); // 0 1
     sumtl_sel    = {l_xx, t_yy};
     dconly_sel2  = l_xx && t_yy;
     yyfull       = {yy, c_state[1:0]};
@@ -226,6 +226,7 @@ begin
     case (c_state)
         S0:
         begin 
+            XXINC = 1'b0;
             if(!STROBEI & NEWLINE) rst_0 = 1'b1;
             else                   rst_0 = 1'b0;
         end
@@ -238,13 +239,19 @@ begin
 
         S2:
         begin 
+            fbptr_rst= 1'b0;
+            outf1_en = 1'b0;
+            submb_en = 1'b0;
             oldxx_en = 1'b0;
+            fbpending_en  = 1'b0;
+            chreadyi_en = 1'b0;
             xxo_sel  = 1'b1;
             topih_en = 1'b1;
         end
 
         S3:
         begin 
+            XXINC = 1'b0;
             xxo_sel  = 1'b0;
             topih_en = 1'b0;
             topii_en = 1'b1;

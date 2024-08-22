@@ -46,24 +46,24 @@ end
 
 initial
 begin 
-    #5
+    
     top_NEWSLICE<=1;  top_NEWLINE<=1;  intra4x4_STROBEI<=0;  recon_FBSTROBE<=1; intra4x4_READYO<=1;
     intra4x4_DATAI<=32'h47;  intra4x4_TOPI<=32'h36;
     intra4x4_TOPMI<=4'h1;   feedbi<=8'h28;
-    #15
+    repeat(3)@(posedge CLK);
 
     top_NEWSLICE<=0;  top_NEWLINE<=1;  intra4x4_STROBEI<=0;  recon_FBSTROBE<=1; intra4x4_READYO<=1;
     intra4x4_DATAI<=32'h47;  intra4x4_TOPI<=32'h36;
     intra4x4_TOPMI<=4'h1;   feedbi<=8'h28;
-    #20
+    repeat(3)@(posedge CLK);
 
    top_NEWSLICE<=0;  top_NEWLINE<=0;  intra4x4_STROBEI<=1;  recon_FBSTROBE<=1; intra4x4_READYO<=1;
    intra4x4_DATAI<=32'h47;  intra4x4_TOPI<=32'h36;
    intra4x4_TOPMI<=4'h1;   feedbi<=8'h28;
-   #300
+   repeat(20)@(posedge CLK);
 
    recon_FBSTROBE<=0;
-   #1000
+   repeat(300)@(posedge CLK);
 
    $stop;
 end
